@@ -28,8 +28,21 @@ function updateDemoButtons(k){const running=!!activeRuns[k];const b=document.get
 function advanceDemo(k){if(steps[k]>=3){stopDemo(k);return}steps[k]++;paint(k);if(steps[k]>=3)stopDemo(k)}
 function playDemo(k){if(activeRuns[k]){stopDemo(k);return}if(steps[k]>=3){steps[k]=0;paint(k)}const screen=document.getElementById(k+"-screen");screen?.classList.add("playing");activeRuns[k]=setInterval(()=>advanceDemo(k),delayMs);updateDemoButtons(k)}
 function restartDemo(k){stopDemo(k,true);playDemo(k)}
-for(const k of stepKeys){const controls=document.querySelector("#"+k+" + .controls");if(controls){controls.outerHTML='<div class="showcase-controls"><button class="primary" id="'+k+'-play" onclick="playDemo(\''+k+'\')">▶ Start demo</button><button onclick="restartDemo(\''+k+'\')">↻ Opnieuw</button><span class="demo-meta" id="'+k+'-meta">Klaar · start wanneer jij wilt</span></div>'}else{const screen=document.getElementById(k+"-screen");if(screen){const old=screen.nextElementSibling;if(old?.classList.contains("controls"))old.outerHTML='<div class="showcase-controls"><button class="primary" id="'+k+'-play" onclick="playDemo(\''+k+'\')">▶ Start demo</button><button onclick="restartDemo(\''+k+'\')">↻ Opnieuw</button><span class="demo-meta" id="'+k+'-meta">Klaar · start wanneer jij wilt</span></div>'}}}updateDemoButtons(k)}
-const originalGo21=go;go=function(n){for(const k of stepKeys)stopDemo(k);if(systemRunning)toggleEcosystem();originalGo21(n);document.querySelectorAll("#menu button").forEach((b,i)=>b.classList.toggle("selected",i===current));const chapter=document.getElementById("chapter-rail");if(chapter){const eyebrow=slides[current].querySelector(".eyebrow")?.textContent||"";chapter.innerHTML='<b>●</b> '+eyebrow.replace(/^\\d+\\s*\\/\\s*/,"")}}; 
+for(const k of stepKeys){
+ const screen=document.getElementById(k+"-screen");
+ if(!screen)continue;
+ const old=screen.nextElementSibling;
+ if(old&&old.classList.contains("controls")){
+  const wrap=document.createElement("div");
+  wrap.className="showcase-controls";
+  const play=document.createElement("button");play.className="primary";play.id=k+"-play";play.textContent="▶ Start demo";play.addEventListener("click",()=>playDemo(k));
+  const again=document.createElement("button");again.textContent="↻ Opnieuw";again.addEventListener("click",()=>restartDemo(k));
+  const meta=document.createElement("span");meta.className="demo-meta";meta.id=k+"-meta";meta.textContent="Klaar · start wanneer jij wilt";
+  wrap.append(play,again,meta);old.replaceWith(wrap);
+ }
+ updateDemoButtons(k);
+}
+const originalGo21=go;go=function(n){for(const k of stepKeys)stopDemo(k);if(systemRunning)toggleEcosystem();originalGo21(n);document.querySelectorAll("#menu button").forEach((b,i)=>b.classList.toggle("selected",i===current));const chapter=document.getElementById("chapter-rail");if(chapter){const eyebrow=slides[current].querySelector(".eyebrow")?.textContent||"";chapter.textContent="● "+eyebrow;}};
 const originalPaint21=paint;paint=function(k){originalPaint21(k);document.querySelectorAll("#"+k+" .node").forEach((node,i)=>node.classList.toggle("completed",i<steps[k]));updateDemoButtons(k)};
 const story=document.createElement("div");story.className="system-story";story.innerHTML='<b>SIMULATIE GEREED</b> · Een klantvraag activeert een keten van gespecialiseerde agents.<div class="story-meter"><div id="system-meter"></div></div>';ecosystem?.insertAdjacentElement("afterend",story);
 let systemStep=0,systemTimer=null;const systemEvents=[["Klantvraag ontvangen","Een klant vraagt om een nieuwe leverdatum."],["Service-agent","Herkent de vraag en haalt klantcontext op."],["Planning-agent","Controleert de beschikbare levermomenten."],["Administratie-agent","Bereidt de wijziging in het systeem voor."],["Menselijke controle","Een medewerker beoordeelt de voorgestelde wijziging."],["Afgerond","De keten is doorlopen; er zijn geen echte systemen gewijzigd."]];
